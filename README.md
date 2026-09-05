@@ -1,189 +1,106 @@
-# Nexus — Real-Time AI Meeting Intelligence Platform
+# MeetAI
 
-> **Transform your team meetings into actionable intelligence in real time.**  
-> Built with FastAPI, React, TypeScript, WebSockets, Celery, Redis, and OpenAI.
+MeetAI is a real-time AI meeting platform. The Day 1 repository foundation establishes the React/Vite frontend, FastAPI backend, PostgreSQL persistence layer, Redis/Celery worker infrastructure, WebSocket transport path, and Nginx ingress. Application features are intentionally deferred to later implementation days.
 
----
-
-## 🌟 Overview
-
-**Nexus** is a full-stack, real-time meeting collaboration and intelligence platform designed to eliminate meeting fatigue and lost context. Nexus handles live meeting interactions with low-latency WebSockets, runs asynchronous background audio processing through Celery and Redis, transcribes meetings with OpenAI Whisper, and automatically synthesizes discussions into structured summaries, key decisions, and follow-up action items with OpenAI GPT-4o.
-
----
-
-## 🚀 Key Features
-
-* 🔐 **Secure Authentication**: JWT-based access and refresh token rotation with cryptographically secure session revocation.
-* 📅 **Meeting Lifecycle**: Create, schedule, join, manage, and archive collaborative meeting rooms.
-* ⚡ **Real-Time Collaboration**: Sub-100ms WebSocket chat, presence announcements, and live typing indicators.
-* 🎙️ **Asynchronous Audio Pipeline**: Decoupled audio upload, validation, and background processing powered by Celery & Redis.
-* 📝 **Timestamped Transcripts**: High-fidelity speech-to-text conversion via OpenAI Whisper with segment-level timestamps.
-* 🧠 **AI Meeting Intelligence**: Automated extraction of meeting overviews, key decisions, and assigned action items using GPT-4o.
-* 🔍 **Searchable History**: Paginated, full-text search across meeting records and historical transcript content.
-* 🐳 **Containerized Deployment**: Ready-to-deploy multi-container architecture orchestrated with Docker Compose and reverse-proxied behind Nginx.
-
----
-
-## 🏗️ Architecture Flow
+## Architecture
 
 ```text
-Client Browser (React + TypeScript + Vite + Tailwind CSS)
-   │
-   ├── REST API (HTTP) ───────────► [ Nginx Ingress ] ──► [ FastAPI Backend ] ──► [ PostgreSQL ]
-   │                                                             │
-   ├── Real-Time Chat (WebSocket) ─► [ Nginx Ingress ] ──────────┤
-   │                                                             │
-   └── Audio Upload (REST) ───────► [ Nginx Ingress ] ───────────┤
-                                                                 ▼
-                                                         [ Redis Broker ]
-                                                                 │
-                                                                 ▼
-                                                         [ Celery Worker ]
-                                                                 │
-                                                      ┌──────────┴──────────┐
-                                                      ▼                     ▼
-                                              OpenAI Whisper        OpenAI GPT-4o
-                                            (Audio Transcription)  (Summaries & Tasks)
-                                                      │                     │
-                                                      └──────────┬──────────┘
-                                                                 ▼
-                                                         [ PostgreSQL ]
+Browser -> Nginx -> React frontend
+                 -> FastAPI (/api, /ws)
+                      -> PostgreSQL
+                      -> Redis -> Celery worker
 ```
 
----
+The backend is organized into API, core infrastructure, models, schemas, services, repositories, WebSocket, and worker layers. Routes are versioned under `/api/v1`; business logic and database access will be added as individual features are implemented.
 
-## 🛠️ Technology Stack
+## Technology stack
 
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Frontend** | **React 18 + TypeScript + Vite** | High-performance, type-safe single page application |
-| **Styling** | **Tailwind CSS** | Responsive, modern design system |
-| **Routing** | **React Router v6** | Client-side routing and protected navigation flows |
-| **Backend** | **FastAPI (Python 3.11+)** | Asynchronous, typed REST APIs and native WebSockets |
-| **ORM & Migrations** | **SQLAlchemy 2.x & Alembic** | Database models, schema migrations, and transaction safety |
-| **Data Validation** | **Pydantic v2** | Request and response schema validation |
-| **Database** | **PostgreSQL 16** | Durable relational storage for meetings, users, and AI outputs |
-| **Cache & Broker** | **Redis 7** | Celery task queue broker and real-time pub/sub layer |
-| **Task Queue** | **Celery** | Asynchronous background processing for long-running AI jobs |
-| **AI Models** | **OpenAI Whisper & GPT-4o** | Speech-to-text transcription and structured intelligence extraction |
-| **Ingress & Proxy** | **Nginx** | Reverse proxy, static asset delivery, and WebSocket proxying |
-| **Containerization** | **Docker & Docker Compose** | Multi-service local and production orchestration |
+- Backend: Python 3.12+, FastAPI, SQLAlchemy 2.x, Pydantic v2, Alembic, Pytest
+- Frontend: React 18, TypeScript (strict), Vite, React Router, Tailwind CSS, Axios
+- Infrastructure: PostgreSQL 16, Redis 7, Celery, Docker Compose, Nginx
 
----
-
-## 📂 Repository Structure
+## Repository structure
 
 ```text
-.
-├── backend/
-│   ├── app/
-│   │   ├── api/             # REST endpoints and WebSocket routers
-│   │   ├── core/            # App config, database session, security, and Celery setup
-│   │   ├── models/          # SQLAlchemy 2.x ORM models
-│   │   ├── schemas/         # Pydantic v2 validation schemas
-│   │   ├── services/        # Business logic operations
-│   │   ├── repositories/    # Database query abstraction layer
-│   │   ├── websocket/       # ConnectionManager and real-time broadcasters
-│   │   └── workers/         # Celery task definitions (Whisper + GPT pipelines)
-│   ├── alembic/             # Database migration versions
-│   ├── tests/               # Automated unit, API, DB, and WebSocket tests
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Reusable UI primitives
-│   │   ├── pages/           # Application views (Auth, Dashboard, Meeting Room, History)
-│   │   ├── features/        # Real-time chat, transcription viewer, AI summary cards
-│   │   ├── hooks/           # useAuth, useWebSocket, useMeeting custom hooks
-│   │   └── services/        # API client and network handlers
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── Dockerfile
-├── nginx/
-│   └── nginx.conf           # Reverse proxy configuration
-├── docker-compose.yml       # Local development & production orchestration
-├── instruction.md           # Step-by-step developer implementation guide
-└── README.md
+backend/
+  app/{api,core,models,schemas,services,repositories,websocket,workers}/
+  alembic/                 # Migration environment and future revisions
+  tests/                   # Backend tests
+frontend/
+  src/{components,pages,features,hooks,services,types}/
+nginx/nginx.conf           # /, /api, and /ws routing
+docker-compose.yml
+.env.example
 ```
 
----
+## Local setup
 
-## 🚦 Quick Start Guide
+1. Copy `.env.example` to `.env` and replace the placeholder secrets.
+2. Start PostgreSQL and Redis:
 
-### 1. Clone the Repository
+   ```bash
+   docker compose up -d db redis
+   ```
+
+3. Create a backend environment and install dependencies:
+
+   ```bash
+   cd backend
+   python -m venv .venv
+   # Windows PowerShell: .\.venv\Scripts\Activate.ps1
+   # macOS/Linux: source .venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+4. In another terminal, install and run the frontend:
+
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+The backend health endpoint is `http://localhost:8000/health`. The versioned foundation endpoint is `http://localhost:8000/api/v1`.
+
+## Docker setup
+
+Build and start the complete foundation:
+
 ```bash
-git clone https://github.com/jaiswaraditya14/Nexus-.git
-cd Nexus-
+docker compose up --build
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env` and fill in your settings:
-```bash
-cp .env.example .env
-```
-Ensure you provide your `OPENAI_API_KEY` for AI features.
+Open `http://localhost`. Nginx serves the frontend and proxies `/api` and `/ws` to FastAPI. The backend and Celery worker share the same image and environment. Stop services with `docker compose down`; add `-v` only when you intentionally want to remove local database and Redis volumes.
 
-### 3. Start Database & Redis
-Ensure Docker Desktop is running, then start the services:
-```bash
-docker compose up -d db redis
-```
+## Environment variables
 
-### 4. Setup & Start Backend
-```bash
-cd backend
-python -m venv venv
+See [.env.example](.env.example) for the documented template. Required areas are PostgreSQL connection details, Redis URL, JWT settings, and service/CORS URLs. Never commit `.env` or real secrets.
 
-# Windows:
-.\venv\Scripts\Activate.ps1
-# macOS / Linux:
-source venv/bin/activate
+## Tests and validation commands
 
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
+Backend tests:
 
-### 5. Start Celery Worker
-In a new terminal (with venv activated):
-```bash
-cd backend
-celery -A app.core.celery_app.celery worker --loglevel=info
-```
-
-### 6. Setup & Start Frontend
-In a new terminal:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Visit **`http://localhost:5173`** to access the web application!
-
----
-
-## 🧪 Testing
-
-Run backend tests using `pytest`:
 ```bash
 cd backend
 pytest -v
 ```
 
----
+Frontend build:
 
-## 📖 Detailed Instructions
+```bash
+cd frontend
+npm run build
+```
 
-For the complete 15-day implementation roadmap, system architecture specs, and step-by-step feature guides, refer to [instruction.md](instruction.md).
+Alembic is ready for future revisions:
 
----
+```bash
+cd backend
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+```
 
-## 👤 Author
+## Future implementation placeholders
 
-* **Aditya Jaiswar** — [GitHub Profile](https://github.com/jaiswaraditya14)
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
+The next phases will add JWT registration/login and refresh-token rotation, meeting lifecycle APIs, persisted chat and presence, Redis pub/sub, validated audio uploads, Celery transcription and AI summaries, searchable history, security hardening, comprehensive tests, and production HTTPS configuration. WebRTC video/audio, calendar synchronization, diarization, vector search, live voice agents, enterprise SSO, and advanced analytics remain outside the initial scope.

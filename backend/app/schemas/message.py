@@ -1,0 +1,2 @@
+"""Message schema placeholder."""
+

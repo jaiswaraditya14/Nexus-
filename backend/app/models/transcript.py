@@ -1,0 +1,2 @@
+"""Transcript model placeholder."""
+

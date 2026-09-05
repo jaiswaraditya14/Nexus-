@@ -37,6 +37,7 @@ pnpm-debug.log*
 lerna-debug.log*
 frontend/dist/
 frontend/.vite/
+frontend/*.tsbuildinfo
 
 # Environment variables and secrets
 .env

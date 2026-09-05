@@ -1,0 +1,2 @@
+"""Transcript schema placeholder."""
+

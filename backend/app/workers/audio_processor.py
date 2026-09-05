@@ -1,0 +1,2 @@
+"""Audio-processing worker placeholder."""
+
