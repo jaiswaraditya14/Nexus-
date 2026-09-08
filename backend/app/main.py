@@ -37,7 +37,12 @@ def create_app() -> FastAPI:
     @application.get("/health", tags=["system"])
     async def health_check() -> dict[str, str]:
         """Return a lightweight process health response."""
-        return {"status": "ok", "service": "meetai-backend"}
+        return {"status": "healthy", "service": "meetai-backend"}
+
+    @application.get("/api/health", tags=["system"])
+    async def api_health_check() -> dict[str, str]:
+        """Return API health and public version information."""
+        return {"status": "healthy", "version": settings.APP_VERSION}
 
     application.include_router(api_v1_router, prefix="/api/v1")
     application.include_router(websocket_router)

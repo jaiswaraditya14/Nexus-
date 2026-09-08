@@ -62,5 +62,8 @@ desktop.ini
 *.swp
 *.swo
 
+# Temporary QA screenshots (generated from PDF for visual inspection)
+tmp/pdfs/*.png
+
 # Antigravity IDE system generated files
 .system_generated/

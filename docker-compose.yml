@@ -2,13 +2,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-meetai}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meetai}
-      POSTGRES_DB: ${POSTGRES_DB:-meetai}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-meetai_db}
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-meetai} -d ${POSTGRES_DB:-meetai}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-meetai_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -16,6 +18,8 @@ services:
   redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -27,11 +31,18 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-meetai}:${POSTGRES_PASSWORD:-meetai}@db:5432/${POSTGRES_DB:-meetai}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@db:5432/${POSTGRES_DB:-meetai_db}
       REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-local-development}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AUDIO_UPLOAD_DIR: ${AUDIO_UPLOAD_DIR:-uploads}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-25}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
@@ -47,10 +58,16 @@ services:
     build: ./backend
     command: celery -A app.core.celery_app.celery worker --loglevel=info
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-meetai}:${POSTGRES_PASSWORD:-meetai}@db:5432/${POSTGRES_DB:-meetai}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@db:5432/${POSTGRES_DB:-meetai_db}
       REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-local-development}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AUDIO_UPLOAD_DIR: ${AUDIO_UPLOAD_DIR:-uploads}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-25}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
     depends_on:
       db:
         condition: service_healthy

@@ -61,7 +61,7 @@ docker-compose.yml
    npm run dev
    ```
 
-The backend health endpoint is `http://localhost:8000/health`. The versioned foundation endpoint is `http://localhost:8000/api/v1`.
+Backend health endpoints are `http://localhost:8000/health` and `http://localhost:8000/api/health`. Interactive API documentation is available at `http://localhost:8000/docs`.
 
 ## Docker setup
 
